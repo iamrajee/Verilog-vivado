@@ -1,0 +1,236 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 11/07/2017 08:49:40 PM
+// Design Name: 
+// Module Name: smart
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
+
+
+module smart(input clk, input carin, input [2:0]ticket , input carout , input
+[2:0]takepass ,output reg  [6:0]seg1 , seg2 , output reg green ,red,sound , input button,button1);
+reg [27:0]i;
+reg j,k;
+reg [3:0]num;
+reg blinkr, blinkg,z;
+
+
+
+
+reg  a1,a2,a3,b1,b2,b3,c1,c2,c3;
+reg [27:0]i1;
+reg j1; 
+reg[2:0] pass;
+reg blinks,blinks1;
+reg [20:0]count;
+reg ind;
+initial
+begin
+blinkr=1'b0;
+red=1'b0;
+z=1'b0;
+blinkg=1'b0;
+blinks=1'b0;
+blinks1=1'b0;
+green=1'b0;
+ i=27'b0;
+j=1'b0;
+k=1'b1;
+ind=1'b0;
+num=3'b0;
+sound=1'b0;
+count=20'b0;
+pass = 3'b000; // default password
+end
+
+always @ (posedge clk) // reduced clock
+begin
+i=i+1;
+if(i==62500000)
+begin
+j=~j;
+i=0;
+end
+end
+
+
+always @ (posedge clk) // reduced clock
+begin
+i1=i1+1;
+if(i1==31250000)
+begin
+j1=~j1;
+i1=0;
+end
+end
+
+always @ (posedge j)
+begin
+if(carin==1)
+begin
+//red = 0;
+blinkg = 0; 
+if(k)
+begin
+   
+ if(ticket[2]==1 && button==1)
+   begin
+       k=0;
+      ind=0;
+    a1=pass[2];
+    b1=pass[1];
+    c1=pass[0];
+    pass[2]= ( ( (~b1)&(~c1) )| ( (~a1) &c1 ));
+    pass[1]= ( ((~b1)&(~c1)) | (a1&b1));
+    pass[0]= ((b1&c1)| (a1&c1)|( (~a1)&(~b1)&(~c1) ));
+   end
+  else if(ticket[1]==1 && button==1 )
+   begin
+      k=0;
+      ind=0;
+   a2= pass[2];
+   b2= pass[1];
+   c2= pass[0];
+   pass[2]= ((c2));
+   pass[1]= ( ((~a2)&(~b2))|(b2&c2) );
+   pass[0]= ( ( (~b2)&(c2) )| ( (~a2) &c2 ));
+   end
+   else if(ticket[0]==1 && button==1)
+   begin
+      k=0;
+      ind=0;
+   a3=(pass[2]);
+   b3=(pass[1]);
+   c3=(pass[0]);
+   pass[2]= ((a3&b3)|(c3));
+   pass[1]= ( ( (b3)&(~c3) )| ( (~a3) &c3 ));
+   pass[0]= (b3|(c3&a3));
+   end
+   
+ end
+ 
+end
+
+if(ind==0 && k==0)
+begin
+ if(button1)
+  begin
+    if((pass[2]==takepass[2] && pass[1]==takepass[1] && pass[0]==takepass[0]))
+      begin 
+     k=1;
+     blinkg=1; 
+     blinkr=0;
+     blinks=0;
+     num=num+1;
+     ind=1;
+     end
+      else
+       begin        
+         blinks=1;
+         blinkg=0;
+         blinkr=1;
+       end
+     end  
+end 
+if(carout==1)
+begin
+num=num-1;
+end
+
+if(num==7)
+begin
+  z=1;
+  blinks=0;
+  blinkg=0;
+  blinkr=0;
+ end
+ else 
+ begin
+  z=0;
+ end
+ 
+ 
+  case(num)
+  3'b000 : seg1=7'b0000000;
+  3'b001 : seg1=7'b0110000;
+  3'b010 : seg1=7'b1101101;
+  3'b011 : seg1=7'b1111001;
+  3'b100 : seg1=7'b0110011;
+  3'b101 : seg1=7'b1011011;
+  3'b110 : seg1=7'b1011111;
+  3'b111 : seg1=7'b1110000;
+  default: seg1=7'b0000000; 
+ 
+  endcase
+  
+    case(pass)
+  3'b000 : seg2=7'b0000000;
+  3'b001 : seg2=7'b0110000;
+  3'b010 : seg2=7'b1101101;
+  3'b011 : seg2=7'b1111001;
+  3'b100 : seg2=7'b0110011;
+  3'b101 : seg2=7'b1011011;
+  3'b110 : seg2=7'b1011111;
+  3'b111 : seg2=7'b1110000;
+  3'b000 : seg2=7'b1111111;
+  3'b001 : seg2=7'b1111011;  
+ default : seg2=7'b0000000;
+ 
+  endcase
+  
+end   
+
+  
+  
+
+always @ (posedge j1)
+begin
+
+if(blinkg==1)
+begin
+red=0;
+green = ~green;
+end
+else if(z==1)
+begin
+red=1;
+green=0;
+end
+if(blinkr==1)
+begin
+green=0;
+red=~red;
+end 
+else if(z==1)
+begin
+red=1;
+green=0;
+end 
+
+blinks1=blinks;
+if(blinks1==1)
+begin
+count=count+1;
+if(count==10)
+begin
+ blinks1=0;
+ count=0;
+end
+sound=~sound;
+end
+
+end
+endmodule
